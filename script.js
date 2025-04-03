@@ -122,5 +122,87 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+
+// Configuración inicial (todo lo que ya tienes se mantiene igual)
+// ... 
+
+// --- Añade esto después de la configuración de los jugadores ---
+
+// Configuración de los enemigos
+const enemies = [];
+const enemyWidth = 60;
+const enemyHeight = 60;
+const enemyRows = 3;
+const enemyCols = 8;
+const enemyPadding = 20;
+const enemyOffsetTop = 50;
+const enemySpeed = 2;
+let enemyDirection = 1; // 1 = derecha, -1 = izquierda
+
+// Crear enemigos en formación
+for (let r = 0; r < enemyRows; r++) {
+    for (let c = 0; c < enemyCols; c++) {
+        enemies.push({
+            x: c * (enemyWidth + enemyPadding) + 100,
+            y: r * (enemyHeight + enemyPadding) + enemyOffsetTop,
+            width: enemyWidth,
+            height: enemyHeight,
+            alive: true
+        });
+    }
+}
+
+// Función para dibujar enemigos
+function drawEnemies() {
+    ctx.fillStyle = 'red'; // Color de los enemigos (o usa imágenes como hiciste con las naves)
+    enemies.forEach(enemy => {
+        if (enemy.alive) {
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            // Si quieres usar imágenes: ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
+        }
+    });
+}
+
+// Función para mover enemigos
+function moveEnemies() {
+    let edgeReached = false;
+
+    // Verificar si algún enemigo toca el borde
+    enemies.forEach(enemy => {
+        if (enemy.alive && 
+            (enemy.x + enemy.width >= canvas.width || enemy.x <= 0)) {
+            edgeReached = true;
+        }
+    });
+
+    // Cambiar dirección y bajar si tocan el borde
+    if (edgeReached) {
+        enemyDirection *= -1;
+        enemies.forEach(enemy => {
+            if (enemy.alive) enemy.y += 20; // Bajar 20px
+        });
+    }
+
+    // Mover enemigos horizontalmente
+    enemies.forEach(enemy => {
+        if (enemy.alive) enemy.x += enemySpeed * enemyDirection;
+    });
+}
+
+// --- Modifica la función gameLoop para incluir enemigos ---
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    movePlayer();
+    moveEnemies(); // <-- Añade esta línea
+    drawPlayer(player1, player1Img);
+    drawPlayer(player2, player2Img);
+    drawEnemies(); // <-- Añade esta línea
+    drawBullets();
+
+    requestAnimationFrame(gameLoop);
+}
+
+
 // Iniciar la animación del juego
 gameLoop();
