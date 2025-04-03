@@ -57,12 +57,6 @@ function movePlayer() {
     if (keys['ArrowRight'] && player2.x < canvas.width - player2.width) {
         player2.x += player2.speed; // Mover derecha
     }
-    if (keys['ArrowUp'] && player2.y > 0) {
-        player2.y -= player2.speed; // Mover arriba
-    }
-    if (keys['ArrowDown'] && player2.y < canvas.height - player2.height) {
-        player2.y += player2.speed; // Mover abajo
-    }
 }
 
 // Función para disparar
