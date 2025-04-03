@@ -2,8 +2,8 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-canvas.width = 800;
-canvas.height = 600;
+canvas.width = 1200;
+canvas.height = 800;
 
 // Cargar imágenes de las naves
 const player1Img = new Image();
@@ -15,7 +15,7 @@ player2Img.src = 'images/nave2.png'; // Ruta a tu imagen para el jugador 2
 // Configuración de las naves
 let player1 = { 
     x: canvas.width / 2 - 25, 
-    y: canvas.height - 70, 
+    y: canvas.height - 120, 
     width: 100, 
     height: 100, 
     speed: 5, 
