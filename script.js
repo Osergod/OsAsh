@@ -8,28 +8,30 @@ canvas.height = 800;
 // Cargar imágenes
 const player1Img = new Image();
 player1Img.src = 'images/nave1.png';
+
 const player2Img = new Image();
 player2Img.src = 'images/nave2.png';
-const enemyImg = new Image();
-enemyImg.src = 'images/EnemigoAnim.gif';
+
+const enemySprite = new Image();
+enemySprite.src = 'images/EnemigoAnim.png'; // Spritesheet animado
 
 // Jugadores
-const player1 = { 
-    x: canvas.width / 2 - 150, 
-    y: canvas.height - 120, 
-    width: 100, 
-    height: 100, 
-    speed: 7, 
+const player1 = {
+    x: canvas.width / 2 - 150,
+    y: canvas.height - 120,
+    width: 100,
+    height: 100,
+    speed: 7,
     bullets: [],
     canShoot: true
 };
 
-const player2 = { 
-    x: canvas.width / 2 + 50, 
-    y: canvas.height - 120, 
-    width: 100, 
-    height: 100, 
-    speed: 7, 
+const player2 = {
+    x: canvas.width / 2 + 50,
+    y: canvas.height - 120,
+    width: 100,
+    height: 100,
+    speed: 7,
     bullets: [],
     canShoot: true
 };
@@ -42,9 +44,9 @@ const ENEMY_CONFIG = {
     height: 60,
     rows: 4,
     cols: 10,
-    padding: 10,
+    padding: 5,
     offsetTop: 60,
-    speed: 1,
+    speed: 0.5,
     shootChance: 0.015
 };
 
@@ -52,7 +54,7 @@ const ENEMY_CONFIG = {
 for (let r = 0; r < ENEMY_CONFIG.rows; r++) {
     for (let c = 0; c < ENEMY_CONFIG.cols; c++) {
         enemies.push({
-            x: c * (ENEMY_CONFIG.width + ENEMY_CONFIG.padding) + 150,
+            x: c * (ENEMY_CONFIG.width + ENEMY_CONFIG.padding) + 200,
             y: r * (ENEMY_CONFIG.height + ENEMY_CONFIG.padding) + ENEMY_CONFIG.offsetTop,
             width: ENEMY_CONFIG.width,
             height: ENEMY_CONFIG.height,
@@ -63,6 +65,14 @@ for (let r = 0; r < ENEMY_CONFIG.rows; r++) {
 
 // Teclado
 const keys = {};
+
+// Spritesheet animación
+let enemyFrame = 0;
+const totalEnemyFrames = 2;
+const enemyFrameWidth = 128;
+const enemyFrameHeight = 128;
+let enemyAnimTimer = 0;
+const enemyAnimSpeed = 200;
 
 // Funciones de dibujo
 function drawPlayer(player, img) {
@@ -95,12 +105,13 @@ function drawBullets() {
 function drawEnemies() {
     enemies.forEach(enemy => {
         if (enemy.alive) {
-            if (enemyImg.complete) {
-                ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
-            } else {
-                ctx.fillStyle = '#ff0000';
-                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-            }
+            ctx.drawImage(
+                enemySprite,
+                0, enemyFrame * enemyFrameHeight,
+                enemyFrameWidth, enemyFrameHeight,
+                enemy.x, enemy.y,
+                enemy.width, enemy.height
+            );
         }
     });
 }
@@ -116,25 +127,33 @@ function movePlayer() {
 
 function moveEnemies() {
     let changeDirection = false;
-    const margin = 50;
+    const margin = 20;
 
+    // Primero, comprobar si algún enemigo toca el borde
     enemies.forEach(enemy => {
         if (!enemy.alive) return;
-        
-        enemy.x += ENEMY_CONFIG.speed * (changeDirection ? -1 : 1);
-        
-        if (enemy.x <= margin || enemy.x >= canvas.width - enemy.width - margin) {
+        const nextX = enemy.x + ENEMY_CONFIG.speed;
+        if (nextX <= margin || nextX + enemy.width >= canvas.width - margin) {
             changeDirection = true;
         }
     });
 
+    // Luego, mover enemigos
+    enemies.forEach(enemy => {
+        if (!enemy.alive) return;
+
+        if (changeDirection) {
+            enemy.y += 10;
+        } else {
+            enemy.x += ENEMY_CONFIG.speed;
+        }
+    });
+
     if (changeDirection) {
-        enemies.forEach(enemy => {
-            if (enemy.alive) enemy.y += 15;
-        });
         ENEMY_CONFIG.speed *= -1;
     }
 }
+
 
 // Disparos
 function shoot(player) {
@@ -148,7 +167,7 @@ function shoot(player) {
     player.canShoot = false;
     setTimeout(() => {
         player.canShoot = true;
-    }, 1000); // 0.5 segundos
+    }, 1000); // 1 segundo de cooldown
 }
 
 function handleEnemyShooting() {
@@ -180,14 +199,21 @@ function gameLoop() {
     movePlayer();
     moveEnemies();
     handleEnemyShooting();
-    
+
     drawEnemies();
     drawPlayer(player1, player1Img);
     drawPlayer(player2, player2Img);
     drawBullets();
 
+    // Animación del spritesheet
+    enemyAnimTimer += 16;
+    if (enemyAnimTimer >= enemyAnimSpeed) {
+        enemyFrame = (enemyFrame + 1) % totalEnemyFrames;
+        enemyAnimTimer = 0;
+    }
+
     requestAnimationFrame(gameLoop);
 }
 
-// Inicio
+// Iniciar juego
 gameLoop();
