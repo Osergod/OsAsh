@@ -192,9 +192,25 @@ window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
+// Variables vida de los jugadores
+let player1Lives = 3;
+let player2Lives = 3;
+
 // Game Loop
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Mostrar vidas en pantalla
+    ctx.fillStyle = 'white';
+    ctx.font = '24px Arial';
+
+    // Jugador 1 - Izquierda
+    ctx.fillText(`Vides P1: ${player1Lives}`, 20, 30);
+
+    // Jugador 2 - Derecha
+    const text = `Vides P2: ${player2Lives}`;
+    const textWidth = ctx.measureText(text).width;
+    ctx.fillText(text, canvas.width - textWidth - 20, 30);
 
     movePlayer();
     moveEnemies();
@@ -214,6 +230,8 @@ function gameLoop() {
 
     requestAnimationFrame(gameLoop);
 }
+
+
 
 // Iniciar juego
 gameLoop();
