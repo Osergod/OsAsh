@@ -13,27 +13,34 @@ const player2Img = new Image();
 player2Img.src = 'images/nave2.png';
 
 const enemySprite = new Image();
-enemySprite.src = 'images/EnemigoAnim.png'; // Spritesheet animado
+enemySprite.src = 'images/EnemigoAnim.png';
 
 // Jugadores
-const player1 = {
-    x: canvas.width / 2 - 150,
-    y: canvas.height - 120,
-    width: 100,
-    height: 100,
-    speed: 7,
-    bullets: [],
-    canShoot: true
-};
-
-const player2 = {
-    x: canvas.width / 2 + 50,
-    y: canvas.height - 120,
-    width: 100,
-    height: 100,
-    speed: 7,
-    bullets: [],
-    canShoot: true
+const players = {
+    player1: {
+        x: canvas.width / 2 - 150,
+        y: canvas.height - 120,
+        width: 100,
+        height: 100,
+        speed: 7,
+        bullets: [],
+        canShoot: true,
+        lives: 3,
+        invulnerable: false,
+        lastHitTime: 0
+    },
+    player2: {
+        x: canvas.width / 2 + 50,
+        y: canvas.height - 120,
+        width: 100,
+        height: 100,
+        speed: 7,
+        bullets: [],
+        canShoot: true,
+        lives: 3,
+        invulnerable: false,
+        lastHitTime: 0
+    }
 };
 
 // Enemigos
@@ -50,7 +57,7 @@ const ENEMY_CONFIG = {
     shootChance: 0.015
 };
 
-// Crear formación de enemigos
+// Crear enemigos
 for (let r = 0; r < ENEMY_CONFIG.rows; r++) {
     for (let c = 0; c < ENEMY_CONFIG.cols; c++) {
         enemies.push({
@@ -66,7 +73,7 @@ for (let r = 0; r < ENEMY_CONFIG.rows; r++) {
 // Teclado
 const keys = {};
 
-// Spritesheet animación
+// Animación enemigos
 let enemyFrame = 0;
 const totalEnemyFrames = 2;
 const enemyFrameWidth = 128;
@@ -74,49 +81,10 @@ const enemyFrameHeight = 128;
 let enemyAnimTimer = 0;
 const enemyAnimSpeed = 200;
 
-// Funciones de dibujo
-function drawPlayer(player, img) {
-    if (img.complete) {
-        ctx.drawImage(img, player.x, player.y, player.width, player.height);
-    } else {
-        ctx.fillStyle = player === player1 ? 'lime' : 'cyan';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
-    }
-}
+// Estado del juego
+let gameRunning = true;
 
-function drawBullets() {
-    ctx.fillStyle = 'white';
-    [player1, player2].forEach(player => {
-        player.bullets.forEach(bullet => {
-            ctx.fillRect(bullet.x, bullet.y, 5, 15);
-            bullet.y -= 8;
-        });
-        player.bullets = player.bullets.filter(b => b.y > 0);
-    });
-
-    ctx.fillStyle = '#ff5555';
-    enemyBullets.forEach((bullet, i) => {
-        ctx.fillRect(bullet.x, bullet.y, 8, 20);
-        bullet.y += 6;
-    
-        // Colisión con jugador 1
-        if (isColliding(bullet, player1)) {
-            player1Lives = Math.max(0, player1Lives - 1);
-            enemyBullets.splice(i, 1);
-            return;
-        }
-    
-        // Colisión con jugador 2
-        if (isColliding(bullet, player2)) {
-            player2Lives = Math.max(0, player2Lives - 1);
-            enemyBullets.splice(i, 1);
-            return;
-        }
-    
-        if (bullet.y > canvas.height) enemyBullets.splice(i, 1);
-    });    
-}
-
+// Funciones auxiliares
 function isColliding(a, b) {
     return (
         a.x < b.x + b.width &&
@@ -124,6 +92,71 @@ function isColliding(a, b) {
         a.y < b.y + b.height &&
         a.y + a.height > b.y
     );
+}
+
+function checkPlayerHit(player, bullet) {
+    const currentTime = Date.now();
+    if (!player.invulnerable && isColliding(bullet, player)) {
+        player.lives--;
+        player.invulnerable = true;
+        player.lastHitTime = currentTime;
+        return true;
+    }
+    return false;
+}
+
+function updateInvulnerability(player) {
+    const currentTime = Date.now();
+    if (player.invulnerable && currentTime - player.lastHitTime > 2000) {
+        player.invulnerable = false;
+    }
+}
+
+// Funciones de dibujo
+function drawPlayer(player, img) {
+    if (player.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
+        ctx.globalAlpha = 0.5;
+    }
+
+    if (img.complete) {
+        ctx.drawImage(img, player.x, player.y, player.width, player.height);
+    } else {
+        ctx.fillStyle = player === players.player1 ? 'lime' : 'cyan';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+    ctx.globalAlpha = 1.0;
+}
+
+function drawBullets() {
+    // Balas jugadores
+    ctx.fillStyle = 'white';
+    Object.values(players).forEach(player => {
+        player.bullets.forEach(bullet => {
+            ctx.fillRect(bullet.x, bullet.y, 5, 15);
+            bullet.y -= 8;
+        });
+        player.bullets = player.bullets.filter(b => b.y > 0);
+    });
+
+    // Balas enemigos
+    ctx.fillStyle = '#ff5555';
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const bullet = enemyBullets[i];
+        ctx.fillRect(bullet.x, bullet.y, 8, 20);
+        bullet.y += 6;
+
+        // Colisión con jugadores
+        let bulletHit = false;
+        Object.values(players).forEach(player => {
+            if (checkPlayerHit(player, bullet)) {
+                bulletHit = true;
+            }
+        });
+
+        if (bulletHit || bullet.y > canvas.height) {
+            enemyBullets.splice(i, 1);
+        }
+    }
 }
 
 function drawEnemies() {
@@ -140,20 +173,34 @@ function drawEnemies() {
     });
 }
 
+function drawHUD() {
+    ctx.fillStyle = 'white';
+    ctx.font = '24px Arial';
+    ctx.fillText(`Vidas P1: ${players.player1.lives}`, 20, 30);
+    ctx.fillText(`Vidas P2: ${players.player2.lives}`, canvas.width - 150, 30);
+}
+
+function drawGameOver() {
+    ctx.fillStyle = 'red';
+    ctx.font = '60px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
+    ctx.textAlign = 'left';
+}
+
 // Movimiento
 function movePlayer() {
-    if (keys['a'] && player1.x > 0) player1.x -= player1.speed;
-    if (keys['d'] && player1.x < canvas.width - player1.width) player1.x += player1.speed;
+    if (keys['a'] && players.player1.x > 0) players.player1.x -= players.player1.speed;
+    if (keys['d'] && players.player1.x < canvas.width - players.player1.width) players.player1.x += players.player1.speed;
 
-    if (keys['ArrowLeft'] && player2.x > 0) player2.x -= player2.speed;
-    if (keys['ArrowRight'] && player2.x < canvas.width - player2.width) player2.x += player2.speed;
+    if (keys['ArrowLeft'] && players.player2.x > 0) players.player2.x -= players.player2.speed;
+    if (keys['ArrowRight'] && players.player2.x < canvas.width - players.player2.width) players.player2.x += players.player2.speed;
 }
 
 function moveEnemies() {
     let changeDirection = false;
     const margin = 20;
 
-    // Primero, comprobar si algún enemigo toca el borde
     enemies.forEach(enemy => {
         if (!enemy.alive) return;
         const nextX = enemy.x + ENEMY_CONFIG.speed;
@@ -162,10 +209,8 @@ function moveEnemies() {
         }
     });
 
-    // Luego, mover enemigos
     enemies.forEach(enemy => {
         if (!enemy.alive) return;
-
         if (changeDirection) {
             enemy.y += 10;
         } else {
@@ -178,7 +223,6 @@ function moveEnemies() {
     }
 }
 
-
 // Disparos
 function shoot(player) {
     if (!player.canShoot) return;
@@ -189,9 +233,7 @@ function shoot(player) {
     });
 
     player.canShoot = false;
-    setTimeout(() => {
-        player.canShoot = true;
-    }, 1000); // 1 segundo de cooldown
+    setTimeout(() => player.canShoot = true, 1000);
 }
 
 function handleEnemyShooting() {
@@ -201,61 +243,60 @@ function handleEnemyShooting() {
     const shooter = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
     enemyBullets.push({
         x: shooter.x + shooter.width / 2 - 4,
-        y: shooter.y + shooter.height
+        y: shooter.y + shooter.height,
+        width: 8,
+        height: 20
     });
 }
 
 // Eventos
 window.addEventListener('keydown', (e) => {
+    if (!gameRunning) return;
     keys[e.key] = true;
-    if (e.key === ' ') shoot(player1);
-    if (e.key === '0') shoot(player2);
+    if (e.key === ' ') shoot(players.player1);
+    if (e.key === '0') shoot(players.player2);
 });
 
 window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-// Variables vida de los jugadores
-let player1Lives = 3;
-let player2Lives = 3;
-
 // Game Loop
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Mostrar vidas en pantalla
-    ctx.fillStyle = 'white';
-    ctx.font = '24px Arial';
+    // Actualizar estado
+    Object.values(players).forEach(player => {
+        updateInvulnerability(player);
+    });
 
-    // Jugador 1 - Izquierda
-    ctx.fillText(`Vides P1: ${player1Lives}`, 20, 30);
-
-    // Jugador 2 - Derecha
-    const text = `Vides P2: ${player2Lives}`;
-    const textWidth = ctx.measureText(text).width;
-    ctx.fillText(text, canvas.width - textWidth - 20, 30);
-
+    // Dibujar elementos
+    drawHUD();
     movePlayer();
     moveEnemies();
     handleEnemyShooting();
 
     drawEnemies();
-    drawPlayer(player1, player1Img);
-    drawPlayer(player2, player2Img);
+    drawPlayer(players.player1, player1Img);
+    drawPlayer(players.player2, player2Img);
     drawBullets();
 
-    // Animación del spritesheet
+    // Animación enemigos
     enemyAnimTimer += 16;
     if (enemyAnimTimer >= enemyAnimSpeed) {
         enemyFrame = (enemyFrame + 1) % totalEnemyFrames;
         enemyAnimTimer = 0;
     }
 
+    // Verificar game over
+    if (players.player1.lives <= 0 || players.player2.lives <= 0) {
+        gameRunning = false;
+        drawGameOver();
+        return;
+    }
+
     requestAnimationFrame(gameLoop);
 }
-
-
 
 // Iniciar juego
 gameLoop();
