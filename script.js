@@ -46,6 +46,7 @@ function drawPlayer(player, img) {
 }
 
 // Función para dibujar los disparos
+
 function drawBullets() {
     // Dibujar disparos de player 1
     ctx.fillStyle = 'white';
@@ -65,6 +66,24 @@ function drawBullets() {
 
     // Eliminar los disparos que salen del canvas para player 2
     player2.bullets = player2.bullets.filter(bullet => bullet.y > 0);
+
+    // Dibujar disparos enemigos
+    ctx.fillStyle = 'yellow'; // Color distintivo para disparos enemigos
+    for (let i = 0; i < enemyBullets.length; i++) {
+        ctx.fillRect(
+            enemyBullets[i].x,
+            enemyBullets[i].y,
+            enemyBullets[i].width,
+            enemyBullets[i].height
+        );
+        enemyBullets[i].y += enemyBullets[i].speed; // Mover hacia abajo
+
+        // Eliminar disparos que salen del canvas
+        if (enemyBullets[i].y > canvas.height) {
+            enemyBullets.splice(i, 1);
+            i--;
+        }
+    }
 }
 
 // Función para mover las naves
@@ -129,6 +148,9 @@ function gameLoop() {
 // --- Añade esto después de la configuración de los jugadores ---
 
 // Configuración de los enemigos
+const enemyImg = new Image();
+enemyImg.src = 'images/enemigo.png'; // Ruta a tu imagen de enemigo
+
 const enemies = [];
 const enemyWidth = 60;
 const enemyHeight = 60;
@@ -138,6 +160,11 @@ const enemyPadding = 20;
 const enemyOffsetTop = 50;
 const enemySpeed = 2;
 let enemyDirection = 1; // 1 = derecha, -1 = izquierda
+
+// Configuración de disparos enemigos
+const enemyBullets = [];
+const enemyShootInterval = 1000; // Disparan cada 1000ms (1 segundo)
+let lastEnemyShootTime = 0;
 
 // Crear enemigos en formación
 for (let r = 0; r < enemyRows; r++) {
@@ -157,8 +184,12 @@ function drawEnemies() {
     ctx.fillStyle = 'red'; // Color de los enemigos (o usa imágenes como hiciste con las naves)
     enemies.forEach(enemy => {
         if (enemy.alive) {
-            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-            // Si quieres usar imágenes: ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
+            if (enemyImg.complete) {
+                ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
+            } else {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            }
         }
     });
 }
@@ -201,6 +232,24 @@ function gameLoop() {
     drawBullets();
 
     requestAnimationFrame(gameLoop);
+}
+
+// Función para que los enemigos disparen aleatoriamente
+function handleEnemyShooting(timestamp) {
+    if (timestamp - lastEnemyShootTime > enemyShootInterval) {
+        const aliveEnemies = enemies.filter(enemy => enemy.alive);
+        if (aliveEnemies.length > 0) {
+            const randomEnemy = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+            enemyBullets.push({
+                x: randomEnemy.x + randomEnemy.width / 2 - 2.5,
+                y: randomEnemy.y + randomEnemy.height,
+                width: 5,
+                height: 10,
+                speed: 3
+            });
+        }
+        lastEnemyShootTime = timestamp;
+    }
 }
 
 
