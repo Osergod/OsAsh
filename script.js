@@ -98,8 +98,32 @@ function drawBullets() {
     enemyBullets.forEach((bullet, i) => {
         ctx.fillRect(bullet.x, bullet.y, 8, 20);
         bullet.y += 6;
+    
+        // Colisión con jugador 1
+        if (isColliding(bullet, player1)) {
+            player1Lives = Math.max(0, player1Lives - 1);
+            enemyBullets.splice(i, 1);
+            return;
+        }
+    
+        // Colisión con jugador 2
+        if (isColliding(bullet, player2)) {
+            player2Lives = Math.max(0, player2Lives - 1);
+            enemyBullets.splice(i, 1);
+            return;
+        }
+    
         if (bullet.y > canvas.height) enemyBullets.splice(i, 1);
-    });
+    });    
+}
+
+function isColliding(a, b) {
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
 }
 
 function drawEnemies() {
