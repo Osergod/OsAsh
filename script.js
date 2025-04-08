@@ -15,8 +15,8 @@ enemyImg.src = 'images/enemigo.png';
 
 // Jugadores
 const player1 = { 
-    x: canvas.width / 2 - 50, 
-    y: canvas.height - 150, 
+    x: canvas.width / 2 - 150, 
+    y: canvas.height - 120, 
     width: 100, 
     height: 100, 
     speed: 7, 
@@ -24,8 +24,8 @@ const player1 = {
 };
 
 const player2 = { 
-    x: canvas.width / 2 - 50, 
-    y: canvas.height - 250, 
+    x: canvas.width / 2 + 50, 
+    y: canvas.height - 120, 
     width: 100, 
     height: 100, 
     speed: 7, 
@@ -40,10 +40,10 @@ const ENEMY_CONFIG = {
     height: 60,
     rows: 4,
     cols: 10,
-    padding: 30,
-    offsetTop: 80,
-    speed: 2,
-    shootChance: 0.015 // 1.5% de probabilidad por frame
+    padding: 10, // más juntos
+    offsetTop: 60,
+    speed: 1, // más lento
+    shootChance: 0.015
 };
 
 // Crear formación de enemigos
@@ -73,7 +73,6 @@ function drawPlayer(player, img) {
 }
 
 function drawBullets() {
-    // Disparos jugadores
     ctx.fillStyle = 'white';
     [player1, player2].forEach(player => {
         player.bullets.forEach(bullet => {
@@ -83,7 +82,6 @@ function drawBullets() {
         player.bullets = player.bullets.filter(b => b.y > 0);
     });
 
-    // Disparos enemigos
     ctx.fillStyle = '#ff5555';
     enemyBullets.forEach((bullet, i) => {
         ctx.fillRect(bullet.x, bullet.y, 8, 20);
@@ -107,11 +105,9 @@ function drawEnemies() {
 
 // Movimiento
 function movePlayer() {
-    // Player 1 (WASD)
     if (keys['a'] && player1.x > 0) player1.x -= player1.speed;
     if (keys['d'] && player1.x < canvas.width - player1.width) player1.x += player1.speed;
 
-    // Player 2 (Flechas)
     if (keys['ArrowLeft'] && player2.x > 0) player2.x -= player2.speed;
     if (keys['ArrowRight'] && player2.x < canvas.width - player2.width) player2.x += player2.speed;
 }
@@ -132,7 +128,7 @@ function moveEnemies() {
 
     if (changeDirection) {
         enemies.forEach(enemy => {
-            if (enemy.alive) enemy.y += 30;
+            if (enemy.alive) enemy.y += 15; // bajan más lento
         });
         ENEMY_CONFIG.speed *= -1;
     }
