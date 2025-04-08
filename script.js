@@ -131,9 +131,17 @@ function drawBullets() {
     ctx.fillStyle = 'white';
     Object.values(players).forEach(player => {
         if (!player.active) return;
-        player.bullets.forEach(bullet => {
+        player.bullets.forEach((bullet, bIndex) => {
             ctx.fillRect(bullet.x, bullet.y, 5, 15);
             bullet.y -= 8;
+
+            // Colisión con enemigos
+            enemies.forEach(enemy => {
+                if (enemy.alive && isColliding(bullet, enemy)) {
+                    enemy.alive = false;
+                    player.bullets.splice(bIndex, 1);
+                }
+            });
         });
         player.bullets = player.bullets.filter(b => b.y > 0);
     });
@@ -155,6 +163,7 @@ function drawBullets() {
         }
     }
 }
+
 
 function drawEnemies() {
     enemies.forEach(enemy => {
