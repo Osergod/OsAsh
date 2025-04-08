@@ -8,10 +8,8 @@ canvas.height = 800;
 // Cargar imágenes
 const player1Img = new Image();
 player1Img.src = 'images/nave1.png';
-
 const player2Img = new Image();
 player2Img.src = 'images/nave2.png';
-
 const enemySprite = new Image();
 enemySprite.src = 'images/EnemigoAnim.png';
 
@@ -27,7 +25,8 @@ const players = {
         canShoot: true,
         lives: 3,
         invulnerable: false,
-        lastHitTime: 0
+        lastHitTime: 0,
+        active: true
     },
     player2: {
         x: canvas.width / 2 + 50,
@@ -39,7 +38,8 @@ const players = {
         canShoot: true,
         lives: 3,
         invulnerable: false,
-        lastHitTime: 0
+        lastHitTime: 0,
+        active: true
     }
 };
 
@@ -57,7 +57,7 @@ const ENEMY_CONFIG = {
     shootChance: 0.015
 };
 
-// Crear enemigos
+// Inicializar enemigos
 for (let r = 0; r < ENEMY_CONFIG.rows; r++) {
     for (let c = 0; c < ENEMY_CONFIG.cols; c++) {
         enemies.push({
@@ -72,6 +72,7 @@ for (let r = 0; r < ENEMY_CONFIG.rows; r++) {
 
 // Teclado
 const keys = {};
+let gameRunning = true;
 
 // Animación enemigos
 let enemyFrame = 0;
@@ -81,10 +82,7 @@ const enemyFrameHeight = 128;
 let enemyAnimTimer = 0;
 const enemyAnimSpeed = 200;
 
-// Estado del juego
-let gameRunning = true;
-
-// Funciones auxiliares
+// Funciones principales
 function isColliding(a, b) {
     return (
         a.x < b.x + b.width &&
@@ -96,24 +94,25 @@ function isColliding(a, b) {
 
 function checkPlayerHit(player, bullet) {
     const currentTime = Date.now();
-    if (!player.invulnerable && isColliding(bullet, player)) {
+    if (player.active && !player.invulnerable && isColliding(bullet, player)) {
         player.lives--;
         player.invulnerable = true;
         player.lastHitTime = currentTime;
+        if (player.lives <= 0) player.active = false;
         return true;
     }
     return false;
 }
 
-function updateInvulnerability(player) {
-    const currentTime = Date.now();
-    if (player.invulnerable && currentTime - player.lastHitTime > 2000) {
+function updatePlayerStatus(player) {
+    if (player.invulnerable && Date.now() - player.lastHitTime > 2000) {
         player.invulnerable = false;
     }
 }
 
-// Funciones de dibujo
 function drawPlayer(player, img) {
+    if (!player.active) return;
+    
     if (player.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
         ctx.globalAlpha = 0.5;
     }
@@ -131,6 +130,7 @@ function drawBullets() {
     // Balas jugadores
     ctx.fillStyle = 'white';
     Object.values(players).forEach(player => {
+        if (!player.active) return;
         player.bullets.forEach(bullet => {
             ctx.fillRect(bullet.x, bullet.y, 5, 15);
             bullet.y -= 8;
@@ -145,12 +145,9 @@ function drawBullets() {
         ctx.fillRect(bullet.x, bullet.y, 8, 20);
         bullet.y += 6;
 
-        // Colisión con jugadores
         let bulletHit = false;
         Object.values(players).forEach(player => {
-            if (checkPlayerHit(player, bullet)) {
-                bulletHit = true;
-            }
+            if (checkPlayerHit(player, bullet)) bulletHit = true;
         });
 
         if (bulletHit || bullet.y > canvas.height) {
@@ -176,25 +173,59 @@ function drawEnemies() {
 function drawHUD() {
     ctx.fillStyle = 'white';
     ctx.font = '24px Arial';
-    ctx.fillText(`Vidas P1: ${players.player1.lives}`, 20, 30);
-    ctx.fillText(`Vidas P2: ${players.player2.lives}`, canvas.width - 150, 30);
+    ctx.textAlign = 'left';
+    
+    // Jugador 1
+    if (players.player1.active) {
+        ctx.fillText(`Vidas P1: ${players.player1.lives}`, 20, 30);
+    } else {
+        ctx.fillStyle = 'red';
+        ctx.fillText('P1 ELIMINADO', 20, 30);
+        ctx.fillStyle = 'white';
+    }
+    
+    // Jugador 2
+    if (players.player2.active) {
+        ctx.fillText(`Vidas P2: ${players.player2.lives}`, canvas.width - 150, 30);
+    } else {
+        ctx.fillStyle = 'red';
+        ctx.fillText('P2 ELIMINADO', canvas.width - 150, 30);
+        ctx.fillStyle = 'white';
+    }
 }
 
 function drawGameOver() {
+    // Fondo semitransparente
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Texto centrado
     ctx.fillStyle = 'red';
-    ctx.font = '60px Arial';
+    ctx.font = 'bold 72px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 40);
+    
+    // Instrucción
+    ctx.fillStyle = 'white';
+    ctx.font = '36px Arial';
+    ctx.fillText('Presiona F5 para reiniciar', canvas.width/2, canvas.height/2 + 40);
+    
+    // Resetear configuración
     ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
 }
 
-// Movimiento
 function movePlayer() {
-    if (keys['a'] && players.player1.x > 0) players.player1.x -= players.player1.speed;
-    if (keys['d'] && players.player1.x < canvas.width - players.player1.width) players.player1.x += players.player1.speed;
+    if (players.player1.active) {
+        if (keys['a'] && players.player1.x > 0) players.player1.x -= players.player1.speed;
+        if (keys['d'] && players.player1.x < canvas.width - players.player1.width) players.player1.x += players.player1.speed;
+    }
 
-    if (keys['ArrowLeft'] && players.player2.x > 0) players.player2.x -= players.player2.speed;
-    if (keys['ArrowRight'] && players.player2.x < canvas.width - players.player2.width) players.player2.x += players.player2.speed;
+    if (players.player2.active) {
+        if (keys['ArrowLeft'] && players.player2.x > 0) players.player2.x -= players.player2.speed;
+        if (keys['ArrowRight'] && players.player2.x < canvas.width - players.player2.width) players.player2.x += players.player2.speed;
+    }
 }
 
 function moveEnemies() {
@@ -218,68 +249,51 @@ function moveEnemies() {
         }
     });
 
-    if (changeDirection) {
-        ENEMY_CONFIG.speed *= -1;
-    }
+    if (changeDirection) ENEMY_CONFIG.speed *= -1;
 }
 
-// Disparos
 function shoot(player) {
-    if (!player.canShoot) return;
-
-    player.bullets.push({
-        x: player.x + player.width / 2 - 2.5,
-        y: player.y
-    });
-
+    if (!player.active || !player.canShoot) return;
+    player.bullets.push({ x: player.x + player.width/2 - 2.5, y: player.y });
     player.canShoot = false;
-    setTimeout(() => player.canShoot = true, 1000);
+    setTimeout(() => player.canShoot = true, 300);
 }
 
 function handleEnemyShooting() {
     const aliveEnemies = enemies.filter(e => e.alive);
     if (aliveEnemies.length === 0 || Math.random() > ENEMY_CONFIG.shootChance) return;
-
     const shooter = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-    enemyBullets.push({
-        x: shooter.x + shooter.width / 2 - 4,
-        y: shooter.y + shooter.height,
-        width: 8,
-        height: 20
-    });
+    enemyBullets.push({ x: shooter.x + shooter.width/2 - 4, y: shooter.y + shooter.height });
 }
 
 // Eventos
 window.addEventListener('keydown', (e) => {
     if (!gameRunning) return;
     keys[e.key] = true;
-    if (e.key === ' ') shoot(players.player1);
-    if (e.key === '0') shoot(players.player2);
+    if (e.key === ' ' && players.player1.active) shoot(players.player1);
+    if (e.key === '0' && players.player2.active) shoot(players.player2);
 });
 
 window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-// Game Loop
+// Bucle principal
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Actualizar estado
-    Object.values(players).forEach(player => {
-        updateInvulnerability(player);
-    });
-
-    // Dibujar elementos
-    drawHUD();
+    // Actualizar
+    Object.values(players).forEach(updatePlayerStatus);
     movePlayer();
     moveEnemies();
     handleEnemyShooting();
 
+    // Dibujar
     drawEnemies();
     drawPlayer(players.player1, player1Img);
     drawPlayer(players.player2, player2Img);
     drawBullets();
+    drawHUD();
 
     // Animación enemigos
     enemyAnimTimer += 16;
@@ -288,8 +302,8 @@ function gameLoop() {
         enemyAnimTimer = 0;
     }
 
-    // Verificar game over
-    if (players.player1.lives <= 0 || players.player2.lives <= 0) {
+    // Verificar fin del juego
+    if (!players.player1.active && !players.player2.active) {
         gameRunning = false;
         drawGameOver();
         return;
@@ -298,5 +312,5 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Iniciar juego
+// Iniciar
 gameLoop();
