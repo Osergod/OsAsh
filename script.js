@@ -20,7 +20,8 @@ const player1 = {
     width: 100, 
     height: 100, 
     speed: 7, 
-    bullets: [] 
+    bullets: [],
+    canShoot: true
 };
 
 const player2 = { 
@@ -29,7 +30,8 @@ const player2 = {
     width: 100, 
     height: 100, 
     speed: 7, 
-    bullets: [] 
+    bullets: [],
+    canShoot: true
 };
 
 // Enemigos
@@ -40,9 +42,9 @@ const ENEMY_CONFIG = {
     height: 60,
     rows: 4,
     cols: 10,
-    padding: 10, // más juntos
+    padding: 10,
     offsetTop: 60,
-    speed: 1, // más lento
+    speed: 1,
     shootChance: 0.015
 };
 
@@ -128,7 +130,7 @@ function moveEnemies() {
 
     if (changeDirection) {
         enemies.forEach(enemy => {
-            if (enemy.alive) enemy.y += 15; // bajan más lento
+            if (enemy.alive) enemy.y += 15;
         });
         ENEMY_CONFIG.speed *= -1;
     }
@@ -136,10 +138,17 @@ function moveEnemies() {
 
 // Disparos
 function shoot(player) {
+    if (!player.canShoot) return;
+
     player.bullets.push({
         x: player.x + player.width / 2 - 2.5,
         y: player.y
     });
+
+    player.canShoot = false;
+    setTimeout(() => {
+        player.canShoot = true;
+    }, 1000); // 0.5 segundos
 }
 
 function handleEnemyShooting() {
