@@ -11,7 +11,7 @@ player1Img.src = 'images/nave1.png';
 const player2Img = new Image();
 player2Img.src = 'images/nave2.png';
 const enemyImg = new Image();
-enemyImg.src = 'images/enemigo.png';
+enemyImg.src = 'images/EnemigoAnim.gif';
 
 // Jugadores
 const player1 = { 
