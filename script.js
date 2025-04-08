@@ -5,253 +5,184 @@ const ctx = canvas.getContext('2d');
 canvas.width = 1200;
 canvas.height = 800;
 
-// Cargar imágenes de las naves
+// Cargar imágenes
 const player1Img = new Image();
-player1Img.src = 'images/nave1.png'; // Ruta a tu imagen para el jugador 1
-
+player1Img.src = 'images/nave1.png';
 const player2Img = new Image();
-player2Img.src = 'images/nave2.png'; // Ruta a tu imagen para el jugador 2
-
-// Configuración de las naves
-let player1 = { 
-    x: canvas.width / 2 - 25, 
-    y: canvas.height - 120, 
-    width: 100, 
-    height: 100, 
-    speed: 5, 
-    bullets: [] 
-};
-
-let player2 = { 
-    x: canvas.width / 2 - 25, 
-    y: canvas.height - 120, 
-    width: 100, 
-    height: 100, 
-    speed: 5, 
-    bullets: [] 
-};
-
-// Teclas presionadas
-const keys = {};
-
-// Función para dibujar las naves
-function drawPlayer(player, img) {
-    if (img.complete) { // Verificar si la imagen está cargada
-        ctx.drawImage(img, player.x, player.y, player.width, player.height);
-    } else {
-        // Si la imagen no está cargada, dibujar un rectángulo como respaldo
-        ctx.fillStyle = player.color;
-        ctx.fillRect(player.x, player.y, player.width, player.height);
-    }
-}
-
-// Función para dibujar los disparos
-
-function drawBullets() {
-    // Dibujar disparos de player 1
-    ctx.fillStyle = 'white';
-    for (let i = 0; i < player1.bullets.length; i++) {
-        ctx.fillRect(player1.bullets[i].x, player1.bullets[i].y, 5, 10);
-        player1.bullets[i].y -= 5;
-    }
-
-    // Eliminar los disparos que salen del canvas para player 1
-    player1.bullets = player1.bullets.filter(bullet => bullet.y > 0);
-
-    // Dibujar disparos de player 2
-    for (let i = 0; i < player2.bullets.length; i++) {
-        ctx.fillRect(player2.bullets[i].x, player2.bullets[i].y, 5, 10);
-        player2.bullets[i].y -= 5;
-    }
-
-    // Eliminar los disparos que salen del canvas para player 2
-    player2.bullets = player2.bullets.filter(bullet => bullet.y > 0);
-
-    // Dibujar disparos enemigos
-    ctx.fillStyle = 'yellow'; // Color distintivo para disparos enemigos
-    for (let i = 0; i < enemyBullets.length; i++) {
-        ctx.fillRect(
-            enemyBullets[i].x,
-            enemyBullets[i].y,
-            enemyBullets[i].width,
-            enemyBullets[i].height
-        );
-        enemyBullets[i].y += enemyBullets[i].speed; // Mover hacia abajo
-
-        // Eliminar disparos que salen del canvas
-        if (enemyBullets[i].y > canvas.height) {
-            enemyBullets.splice(i, 1);
-            i--;
-        }
-    }
-}
-
-// Función para mover las naves
-function movePlayer() {
-    // Movimiento del primer jugador (Player 1)
-    if (keys['a'] && player1.x > 0) {
-        player1.x -= player1.speed;
-    }
-    if (keys['d'] && player1.x < canvas.width - player1.width) {
-        player1.x += player1.speed;
-    }
-
-    // Movimiento del segundo jugador (Player 2)
-    if (keys['ArrowLeft'] && player2.x > 0) {
-        player2.x -= player2.speed;
-    }
-    if (keys['ArrowRight'] && player2.x < canvas.width - player2.width) {
-        player2.x += player2.speed;
-    }
-}
-
-// Función para disparar
-function shoot(player) {
-    if (player === player1) {
-        player1.bullets.push({ x: player1.x + player1.width / 2 - 2.5, y: player1.y });
-    } else {
-        player2.bullets.push({ x: player2.x + player2.width / 2 - 2.5, y: player2.y });
-    }
-}
-
-// Manejo de eventos de teclado
-window.addEventListener('keydown', (e) => {
-    keys[e.key] = true;
-    if (e.key === ' ' && player1.bullets.length === 0) {
-        shoot(player1);
-    }
-    if (e.key === '0' && player2.bullets.length === 0) {
-        shoot(player2);
-    }
-});
-
-window.addEventListener('keyup', (e) => {
-    keys[e.key] = false;
-});
-
-// Función principal de animación
-function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    movePlayer();
-    drawPlayer(player1, player1Img);
-    drawPlayer(player2, player2Img);
-    drawBullets();
-
-    requestAnimationFrame(gameLoop);
-}
-
-
-// Configuración inicial (todo lo que ya tienes se mantiene igual)
-// ... 
-
-// --- Añade esto después de la configuración de los jugadores ---
-
-// Configuración de los enemigos
+player2Img.src = 'images/nave2.png';
 const enemyImg = new Image();
-enemyImg.src = 'images/enemigo.png'; // Ruta a tu imagen de enemigo
+enemyImg.src = 'images/enemigo.png';
 
+// Jugadores
+const player1 = { 
+    x: canvas.width / 2 - 50, 
+    y: canvas.height - 150, 
+    width: 100, 
+    height: 100, 
+    speed: 7, 
+    bullets: [] 
+};
+
+const player2 = { 
+    x: canvas.width / 2 - 50, 
+    y: canvas.height - 250, 
+    width: 100, 
+    height: 100, 
+    speed: 7, 
+    bullets: [] 
+};
+
+// Enemigos
 const enemies = [];
-const enemyWidth = 60;
-const enemyHeight = 60;
-const enemyRows = 3;
-const enemyCols = 8;
-const enemyPadding = 20;
-const enemyOffsetTop = 50;
-const enemySpeed = 2;
-let enemyDirection = 1; // 1 = derecha, -1 = izquierda
-
-// Configuración de disparos enemigos
 const enemyBullets = [];
-const enemyShootInterval = 1000; // Disparan cada 1000ms (1 segundo)
-let lastEnemyShootTime = 0;
+const ENEMY_CONFIG = {
+    width: 60,
+    height: 60,
+    rows: 4,
+    cols: 10,
+    padding: 30,
+    offsetTop: 80,
+    speed: 2,
+    shootChance: 0.015 // 1.5% de probabilidad por frame
+};
 
-// Crear enemigos en formación
-for (let r = 0; r < enemyRows; r++) {
-    for (let c = 0; c < enemyCols; c++) {
+// Crear formación de enemigos
+for (let r = 0; r < ENEMY_CONFIG.rows; r++) {
+    for (let c = 0; c < ENEMY_CONFIG.cols; c++) {
         enemies.push({
-            x: c * (enemyWidth + enemyPadding) + 100,
-            y: r * (enemyHeight + enemyPadding) + enemyOffsetTop,
-            width: enemyWidth,
-            height: enemyHeight,
+            x: c * (ENEMY_CONFIG.width + ENEMY_CONFIG.padding) + 150,
+            y: r * (ENEMY_CONFIG.height + ENEMY_CONFIG.padding) + ENEMY_CONFIG.offsetTop,
+            width: ENEMY_CONFIG.width,
+            height: ENEMY_CONFIG.height,
             alive: true
         });
     }
 }
 
-// Función para dibujar enemigos
+// Teclado
+const keys = {};
+
+// Funciones de dibujo
+function drawPlayer(player, img) {
+    if (img.complete) {
+        ctx.drawImage(img, player.x, player.y, player.width, player.height);
+    } else {
+        ctx.fillStyle = player === player1 ? 'lime' : 'cyan';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+}
+
+function drawBullets() {
+    // Disparos jugadores
+    ctx.fillStyle = 'white';
+    [player1, player2].forEach(player => {
+        player.bullets.forEach(bullet => {
+            ctx.fillRect(bullet.x, bullet.y, 5, 15);
+            bullet.y -= 8;
+        });
+        player.bullets = player.bullets.filter(b => b.y > 0);
+    });
+
+    // Disparos enemigos
+    ctx.fillStyle = '#ff5555';
+    enemyBullets.forEach((bullet, i) => {
+        ctx.fillRect(bullet.x, bullet.y, 8, 20);
+        bullet.y += 6;
+        if (bullet.y > canvas.height) enemyBullets.splice(i, 1);
+    });
+}
+
 function drawEnemies() {
-    ctx.fillStyle = 'red'; // Color de los enemigos (o usa imágenes como hiciste con las naves)
     enemies.forEach(enemy => {
         if (enemy.alive) {
             if (enemyImg.complete) {
                 ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
             } else {
-                ctx.fillStyle = 'red';
+                ctx.fillStyle = '#ff0000';
                 ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
             }
         }
     });
 }
 
-// Función para mover enemigos
-function moveEnemies() {
-    let edgeReached = false;
+// Movimiento
+function movePlayer() {
+    // Player 1 (WASD)
+    if (keys['a'] && player1.x > 0) player1.x -= player1.speed;
+    if (keys['d'] && player1.x < canvas.width - player1.width) player1.x += player1.speed;
 
-    // Verificar si algún enemigo toca el borde
+    // Player 2 (Flechas)
+    if (keys['ArrowLeft'] && player2.x > 0) player2.x -= player2.speed;
+    if (keys['ArrowRight'] && player2.x < canvas.width - player2.width) player2.x += player2.speed;
+}
+
+function moveEnemies() {
+    let changeDirection = false;
+    const margin = 50;
+
     enemies.forEach(enemy => {
-        if (enemy.alive && 
-            (enemy.x + enemy.width >= canvas.width || enemy.x <= 0)) {
-            edgeReached = true;
+        if (!enemy.alive) return;
+        
+        enemy.x += ENEMY_CONFIG.speed * (changeDirection ? -1 : 1);
+        
+        if (enemy.x <= margin || enemy.x >= canvas.width - enemy.width - margin) {
+            changeDirection = true;
         }
     });
 
-    // Cambiar dirección y bajar si tocan el borde
-    if (edgeReached) {
-        enemyDirection *= -1;
+    if (changeDirection) {
         enemies.forEach(enemy => {
-            if (enemy.alive) enemy.y += 20; // Bajar 20px
+            if (enemy.alive) enemy.y += 30;
         });
+        ENEMY_CONFIG.speed *= -1;
     }
+}
 
-    // Mover enemigos horizontalmente
-    enemies.forEach(enemy => {
-        if (enemy.alive) enemy.x += enemySpeed * enemyDirection;
+// Disparos
+function shoot(player) {
+    player.bullets.push({
+        x: player.x + player.width / 2 - 2.5,
+        y: player.y
     });
 }
 
-// --- Modifica la función gameLoop para incluir enemigos ---
+function handleEnemyShooting() {
+    const aliveEnemies = enemies.filter(e => e.alive);
+    if (aliveEnemies.length === 0 || Math.random() > ENEMY_CONFIG.shootChance) return;
+
+    const shooter = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+    enemyBullets.push({
+        x: shooter.x + shooter.width / 2 - 4,
+        y: shooter.y + shooter.height
+    });
+}
+
+// Eventos
+window.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
+    if (e.key === ' ') shoot(player1);
+    if (e.key === '0') shoot(player2);
+});
+
+window.addEventListener('keyup', (e) => {
+    keys[e.key] = false;
+});
+
+// Game Loop
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     movePlayer();
-    moveEnemies(); // <-- Añade esta línea
+    moveEnemies();
+    handleEnemyShooting();
+    
+    drawEnemies();
     drawPlayer(player1, player1Img);
     drawPlayer(player2, player2Img);
-    drawEnemies(); // <-- Añade esta línea
     drawBullets();
 
     requestAnimationFrame(gameLoop);
 }
 
-// Función para que los enemigos disparen aleatoriamente
-function handleEnemyShooting(timestamp) {
-    if (timestamp - lastEnemyShootTime > enemyShootInterval) {
-        const aliveEnemies = enemies.filter(enemy => enemy.alive);
-        if (aliveEnemies.length > 0) {
-            const randomEnemy = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-            enemyBullets.push({
-                x: randomEnemy.x + randomEnemy.width / 2 - 2.5,
-                y: randomEnemy.y + randomEnemy.height,
-                width: 5,
-                height: 10,
-                speed: 3
-            });
-        }
-        lastEnemyShootTime = timestamp;
-    }
-}
-
-
-// Iniciar la animación del juego
+// Inicio
 gameLoop();
