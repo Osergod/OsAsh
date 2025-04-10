@@ -99,6 +99,7 @@ function checkPlayerHit(player, bullet) {
         player.invulnerable = true;
         player.lastHitTime = currentTime;
         if (player.lives <= 0) player.active = false;
+        console.log(`${player === players.player1 ? "P1" : "P2"} ha sido golpeado. Vidas restantes: ${player.lives}`);
         return true;
     }
     return false;
@@ -146,24 +147,32 @@ function drawBullets() {
         player.bullets = player.bullets.filter(b => b.y > 0);
     });
 
-    // Balas enemigos
+    // Balas enemigos (corregido)
     ctx.fillStyle = '#ff5555';
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const bullet = enemyBullets[i];
         ctx.fillRect(bullet.x, bullet.y, 8, 20);
         bullet.y += 6;
 
-        let bulletHit = false;
-        Object.values(players).forEach(player => {
-            if (checkPlayerHit(player, bullet)) bulletHit = true;
-        });
+        let hit = false;
+        for (const playerKey in players) {
+            const player = players[playerKey];
+            if (checkPlayerHit(player, {
+                x: bullet.x,
+                y: bullet.y,
+                width: 8,
+                height: 20
+            })) {
+                hit = true;
+                break;
+            }
+        }
 
-        if (bulletHit || bullet.y > canvas.height) {
+        if (hit || bullet.y > canvas.height) {
             enemyBullets.splice(i, 1);
         }
     }
 }
-
 
 function drawEnemies() {
     enemies.forEach(enemy => {
@@ -204,23 +213,16 @@ function drawHUD() {
 }
 
 function drawGameOver() {
-    // Fondo semitransparente
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Texto centrado
     ctx.fillStyle = 'red';
     ctx.font = 'bold 72px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 40);
-    
-    // Instrucción
+    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
     ctx.fillStyle = 'white';
     ctx.font = '36px Arial';
-    ctx.fillText('Presiona F5 para reiniciar', canvas.width/2, canvas.height/2 + 40);
-    
-    // Resetear configuración
+    ctx.fillText('Presiona F5 para reiniciar', canvas.width / 2, canvas.height / 2 + 40);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
 }
@@ -263,7 +265,7 @@ function moveEnemies() {
 
 function shoot(player) {
     if (!player.active || !player.canShoot) return;
-    player.bullets.push({ x: player.x + player.width/2 - 2.5, y: player.y });
+    player.bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y });
     player.canShoot = false;
     setTimeout(() => player.canShoot = true, 300);
 }
@@ -272,7 +274,7 @@ function handleEnemyShooting() {
     const aliveEnemies = enemies.filter(e => e.alive);
     if (aliveEnemies.length === 0 || Math.random() > ENEMY_CONFIG.shootChance) return;
     const shooter = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-    enemyBullets.push({ x: shooter.x + shooter.width/2 - 4, y: shooter.y + shooter.height });
+    enemyBullets.push({ x: shooter.x + shooter.width / 2 - 4, y: shooter.y + shooter.height });
 }
 
 // Eventos
@@ -291,27 +293,23 @@ window.addEventListener('keyup', (e) => {
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Actualizar
     Object.values(players).forEach(updatePlayerStatus);
     movePlayer();
     moveEnemies();
     handleEnemyShooting();
 
-    // Dibujar
     drawEnemies();
     drawPlayer(players.player1, player1Img);
     drawPlayer(players.player2, player2Img);
     drawBullets();
     drawHUD();
 
-    // Animación enemigos
     enemyAnimTimer += 16;
     if (enemyAnimTimer >= enemyAnimSpeed) {
         enemyFrame = (enemyFrame + 1) % totalEnemyFrames;
         enemyAnimTimer = 0;
     }
 
-    // Verificar fin del juego
     if (!players.player1.active && !players.player2.active) {
         gameRunning = false;
         drawGameOver();
