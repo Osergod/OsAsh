@@ -147,7 +147,7 @@ function drawBullets() {
         player.bullets = player.bullets.filter(b => b.y > 0);
     });
 
-    // Balas enemigos (corregido)
+    // Balas enemigos
     ctx.fillStyle = '#ff5555';
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const bullet = enemyBullets[i];
