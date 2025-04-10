@@ -57,7 +57,6 @@ const ENEMY_CONFIG = {
     shootChance: 0.015
 };
 
-// Inicializar enemigos
 for (let r = 0; r < ENEMY_CONFIG.rows; r++) {
     for (let c = 0; c < ENEMY_CONFIG.cols; c++) {
         enemies.push({
@@ -82,7 +81,6 @@ const enemyFrameHeight = 128;
 let enemyAnimTimer = 0;
 const enemyAnimSpeed = 200;
 
-// Funciones principales
 function isColliding(a, b) {
     return (
         a.x < b.x + b.width &&
@@ -99,7 +97,6 @@ function checkPlayerHit(player, bullet) {
         player.invulnerable = true;
         player.lastHitTime = currentTime;
         if (player.lives <= 0) player.active = false;
-        console.log(`${player === players.player1 ? "P1" : "P2"} ha sido golpeado. Vidas restantes: ${player.lives}`);
         return true;
     }
     return false;
@@ -113,11 +110,9 @@ function updatePlayerStatus(player) {
 
 function drawPlayer(player, img) {
     if (!player.active) return;
-    
     if (player.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
         ctx.globalAlpha = 0.5;
     }
-
     if (img.complete) {
         ctx.drawImage(img, player.x, player.y, player.width, player.height);
     } else {
@@ -128,26 +123,30 @@ function drawPlayer(player, img) {
 }
 
 function drawBullets() {
-    // Balas jugadores
     ctx.fillStyle = 'white';
     Object.values(players).forEach(player => {
         if (!player.active) return;
-        player.bullets.forEach((bullet, bIndex) => {
+        for (let i = player.bullets.length - 1; i >= 0; i--) {
+            const bullet = player.bullets[i];
             ctx.fillRect(bullet.x, bullet.y, 5, 15);
             bullet.y -= 8;
-
-            // Colisión con enemigos
-            enemies.forEach(enemy => {
+        
+            let hit = false;
+            for (const enemy of enemies) {
                 if (enemy.alive && isColliding(bullet, enemy)) {
                     enemy.alive = false;
-                    player.bullets.splice(bIndex, 1);
+                    hit = true;
+                    break;
                 }
-            });
-        });
+            }
+        
+            if (hit || bullet.y < 0) {
+                player.bullets.splice(i, 1);
+            }
+        }        
         player.bullets = player.bullets.filter(b => b.y > 0);
     });
 
-    // Balas enemigos
     ctx.fillStyle = '#ff5555';
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const bullet = enemyBullets[i];
@@ -192,25 +191,18 @@ function drawHUD() {
     ctx.fillStyle = 'white';
     ctx.font = '24px Arial';
     ctx.textAlign = 'left';
-    
-    // Jugador 1
+
+    // Vides jugador 1
     if (players.player1.active) {
         ctx.fillText(`Vidas P1: ${players.player1.lives}`, 20, 30);
-    } else {
-        ctx.fillStyle = 'red';
-        ctx.fillText('P1 ELIMINADO', 20, 30);
-        ctx.fillStyle = 'white';
     }
-    
-    // Jugador 2
+
+    // Vides jugador 2
     if (players.player2.active) {
         ctx.fillText(`Vidas P2: ${players.player2.lives}`, canvas.width - 150, 30);
-    } else {
-        ctx.fillStyle = 'red';
-        ctx.fillText('P2 ELIMINADO', canvas.width - 150, 30);
-        ctx.fillStyle = 'white';
     }
 }
+
 
 function drawGameOver() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -227,12 +219,26 @@ function drawGameOver() {
     ctx.textBaseline = 'alphabetic';
 }
 
+function drawVictory(text) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'lime';
+    ctx.font = 'bold 72px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 40);
+    ctx.fillStyle = 'white';
+    ctx.font = '36px Arial';
+    ctx.fillText('Presiona F5 para reiniciar', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+}
+
 function movePlayer() {
     if (players.player1.active) {
         if (keys['a'] && players.player1.x > 0) players.player1.x -= players.player1.speed;
         if (keys['d'] && players.player1.x < canvas.width - players.player1.width) players.player1.x += players.player1.speed;
     }
-
     if (players.player2.active) {
         if (keys['ArrowLeft'] && players.player2.x > 0) players.player2.x -= players.player2.speed;
         if (keys['ArrowRight'] && players.player2.x < canvas.width - players.player2.width) players.player2.x += players.player2.speed;
@@ -242,7 +248,6 @@ function movePlayer() {
 function moveEnemies() {
     let changeDirection = false;
     const margin = 20;
-
     enemies.forEach(enemy => {
         if (!enemy.alive) return;
         const nextX = enemy.x + ENEMY_CONFIG.speed;
@@ -250,7 +255,6 @@ function moveEnemies() {
             changeDirection = true;
         }
     });
-
     enemies.forEach(enemy => {
         if (!enemy.alive) return;
         if (changeDirection) {
@@ -259,7 +263,6 @@ function moveEnemies() {
             enemy.x += ENEMY_CONFIG.speed;
         }
     });
-
     if (changeDirection) ENEMY_CONFIG.speed *= -1;
 }
 
@@ -277,7 +280,6 @@ function handleEnemyShooting() {
     enemyBullets.push({ x: shooter.x + shooter.width / 2 - 4, y: shooter.y + shooter.height });
 }
 
-// Eventos
 window.addEventListener('keydown', (e) => {
     if (!gameRunning) return;
     keys[e.key] = true;
@@ -289,7 +291,6 @@ window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-// Bucle principal
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -316,8 +317,19 @@ function gameLoop() {
         return;
     }
 
+    if (!players.player1.active && players.player2.active) {
+        gameRunning = false;
+        drawVictory("¡GANA P2!");
+        return;
+    }
+
+    if (!players.player2.active && players.player1.active) {
+        gameRunning = false;
+        drawVictory("¡GANA P1!");
+        return;
+    }
+
     requestAnimationFrame(gameLoop);
 }
 
-// Iniciar
 gameLoop();
