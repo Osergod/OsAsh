@@ -55,7 +55,7 @@ const ENEMY_CONFIG = {
     cols: 20,
     padding: 2,
     offsetTop: 40,
-    speed: 5,
+    speed: 0.69,
     shootChance: 0.04
 };
 
@@ -133,50 +133,48 @@ function drawBullets() {
     ctx.fillStyle = 'white';
     Object.values(players).forEach(player => {
         if (!player.active) return;
-        
+
         for (let i = player.bullets.length - 1; i >= 0; i--) {
             const bullet = player.bullets[i];
             ctx.fillRect(bullet.x, bullet.y, 5, 15);
             bullet.y -= 8;
-        
+
             let hitEnemy = false;
             for (let j = 0; j < enemies.length; j++) {
                 const enemy = enemies[j];
-                
+
                 if (enemy.alive && isColliding(
-                    {x: bullet.x, y: bullet.y, width: 5, height: 15},
-                    {x: enemy.x, y: enemy.y, width: enemy.width, height: enemy.height}
+                    { x: bullet.x, y: bullet.y, width: 5, height: 15 },
+                    { x: enemy.x, y: enemy.y, width: enemy.width, height: enemy.height }
                 )) {
                     enemy.alive = false;
                     hitEnemy = true;
                     player.score++;
-                    
+
                     // Efecto visual
                     ctx.fillStyle = 'gold';
                     ctx.font = '16px Arial';
-                    ctx.fillText('+1', enemy.x + enemy.width/2 - 10, enemy.y);
+                    ctx.fillText('+1', enemy.x + enemy.width / 2 - 10, enemy.y);
                     ctx.fillStyle = 'white';
-                    
-                    // Verificar si un jugador alcanzó 100 enemigos eliminados
-                    if (player.score >= 100) {
-                        let victoryText;
-                        if (player === players.player1) {
-                            victoryText = `¡GANA P1!\nHas eliminado 100 enemigos`;
-                        } else {
-                            victoryText = `¡GANA P2!\nHas eliminado 100 enemigos`;
-                        }
-                        
-                        drawVictory(victoryText);
-                        gameRunning = false;
-                        return;
-                    }
+
                     break;
                 }
             }
-        
+
             if (hitEnemy || bullet.y < 0) {
                 player.bullets.splice(i, 1);
             }
+        }
+
+        // Verificar si un jugador alcanzó 100 enemigos eliminados (fuera del bucle de enemigos)
+        if (player.score >= 100) {
+            const victoryText = player === players.player1
+                ? `¡GANA P1!\nHas eliminado 100 enemigos`
+                : `¡GANA P2!\nHas eliminado 100 enemigos`;
+
+            drawVictory(victoryText);
+            gameRunning = false;
+            return;
         }
     });
 
@@ -207,7 +205,6 @@ function drawBullets() {
     }
 }
 
-
 function drawEnemies() {
     enemies.forEach(enemy => {
         if (enemy.alive) {
@@ -225,20 +222,22 @@ function drawEnemies() {
 function drawHUD() {
     ctx.fillStyle = 'white';
     ctx.font = '24px Arial';
+    
+    // Jugador 1 (a la izquierda)
     ctx.textAlign = 'left';
-
-    // Jugador 1
     if (players.player1.active) {
-        ctx.fillText(`P1 Vidas: ${players.player1.lives}`, 20, 30);
-        ctx.fillText(`P1 Puntos: ${players.player1.score}`, 20, 60);
+        ctx.fillText(`P1 Vidas: ${players.player1.lives}`, 20, 50);  // Ajustamos la posición a la izquierda
+        ctx.fillText(`P1 Puntos: ${players.player1.score}`, 20, 90);  // Ajustamos la posición a la izquierda
     }
 
-    // Jugador 2
+    // Jugador 2 (a la derecha, justificado)
+    ctx.textAlign = 'right';  // Cambiar a alineación a la derecha
     if (players.player2.active) {
-        ctx.fillText(`P2 Vidas: ${players.player2.lives}`, canvas.width - 200, 30);
-        ctx.fillText(`P2 Puntos: ${players.player2.score}`, canvas.width - 200, 60);
+        ctx.fillText(`P2 Vidas: ${players.player2.lives}`, canvas.width - 20, 50);  // Ajustamos la posición a la derecha
+        ctx.fillText(`P2 Puntos: ${players.player2.score}`, canvas.width - 20, 90);  // Ajustamos la posición a la derecha
     }
 }
+
 
 function drawGameOver() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -254,28 +253,32 @@ function drawGameOver() {
     ctx.textAlign = 'left';
 }
 
-function drawVictory(text) {
+function drawVictory(text = '') {
+    if (!text) return;
+
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'lime';
+    
+    // Si es empate, usar color naranja ámbar
+    if (text.includes('¡EMPATE!')) {
+        ctx.fillStyle = '#FF8C00';
+    } else {
+        ctx.fillStyle = 'lime';
+    }
+
     ctx.font = 'bold 72px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    
-    // Dividir el texto en dos partes
+
     const lines = text.split("\n");
-    ctx.fillText(lines[0], canvas.width / 2, canvas.height / 2 - 40);
-    if (lines[1]) {
-        ctx.fillText(lines[1], canvas.width / 2, canvas.height / 2 + 40);
-    }
-    
+    ctx.fillText(lines[0] || '', canvas.width / 2, canvas.height / 2 - 40);
+    ctx.fillText(lines[1] || '', canvas.width / 2, canvas.height / 2 + 40);
+
     ctx.fillStyle = 'white';
     ctx.font = '36px Arial';
     ctx.fillText('Presiona F5 para reiniciar', canvas.width / 2, canvas.height / 2 + 100);
     ctx.textAlign = 'left';
 }
-
-
 
 
 // Funciones de movimiento
@@ -367,10 +370,21 @@ window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-// Bucle principal del juego
-// Bucle principal del juego
-// Bucle principal del juego
-// Bucle principal del juego
+// Función para determinar el ganador
+function determineWinner() {
+    const score1 = players.player1.score || 0; // Aseguramos que sea un número válido
+    const score2 = players.player2.score || 0; // Aseguramos que sea un número válido
+
+    // Comprobamos el ganador
+    if (score1 > score2) {
+        return `¡GANA P1! Puntos: ${score1}`;
+    } else if (score2 > score1) {
+        return `¡GANA P2! Puntos: ${score2}`;
+    } else {
+        return `¡EMPATE! \nP1: ${score1} - P2: ${score2}`;
+    }
+}
+
 // Bucle principal del juego
 function gameLoop() {
     if (!gameRunning) return;
@@ -387,7 +401,7 @@ function gameLoop() {
     drawPlayer(players.player1, player1Img);
     drawPlayer(players.player2, player2Img);
     drawBullets();
-    drawHUD();
+    drawHUD();  // Dibuja las estadísticas fuera del canvas
 
     // Comprobar si los enemigos llegaron a la altura de los jugadores
     if (enemies.some(enemy => enemy.alive && enemy.y + ENEMY_CONFIG.height >= players.player1.y)) {
@@ -401,7 +415,7 @@ function gameLoop() {
     // Verificar si un jugador ha muerto y terminar el juego si es necesario
     if (players.player1.lives <= 0 && players.player2.lives <= 0) {
         // Si ambos jugadores han muerto, empate
-        let victoryText = `¡EMPATE! ${players.player1.score}-${players.player2.score}`;
+        let victoryText = determineWinner(); // Usar la misma función para empate o victoria
         drawVictory(victoryText);
         gameRunning = false;
         return;
@@ -409,7 +423,7 @@ function gameLoop() {
 
     if (players.player1.lives <= 0) {
         // Si el jugador 1 ha muerto, gana el jugador 2
-        let victoryText = `¡GANA P2! Puntos: ${players.player2.score}`;
+        let victoryText = `¡GANA P2! Puntos: ${players.player2.score || 0}`;
         drawVictory(victoryText);
         gameRunning = false;
         return;
@@ -417,7 +431,7 @@ function gameLoop() {
 
     if (players.player2.lives <= 0) {
         // Si el jugador 2 ha muerto, gana el jugador 1
-        let victoryText = `¡GANA P1! Puntos: ${players.player1.score}`;
+        let victoryText = `¡GANA P1! Puntos: ${players.player1.score || 0}`;
         drawVictory(victoryText);
         gameRunning = false;
         return;
@@ -431,17 +445,6 @@ function gameLoop() {
     }
 
     requestAnimationFrame(gameLoop);
-}
-
-// Determinar el ganador o empate cuando los enemigos alcanzan la altura de los jugadores
-function determineWinner() {
-    if (players.player1.score > players.player2.score) {
-        return `¡GANA P1! Puntos: ${players.player1.score}`;
-    } else if (players.player2.score > players.player1.score) {
-        return `¡GANA P2! Puntos: ${players.player2.score}`;
-    } else {
-        return `¡EMPATE! ${players.player1.score}-${players.player2.score}`;
-    }
 }
 
 // Función para mover los enemigos
