@@ -274,6 +274,7 @@ function drawVictory(text) {
 }
 
 
+
 // Funciones de movimiento
 function movePlayer() {
     if (players.player1.active) {
@@ -364,6 +365,7 @@ window.addEventListener('keyup', (e) => {
 });
 
 // Bucle principal del juego
+// Bucle principal del juego
 function gameLoop() {
     if (!gameRunning) return;
     
@@ -379,6 +381,17 @@ function gameLoop() {
     drawPlayer(players.player2, player2Img);
     drawBullets();
     drawHUD();
+
+    // Verificar si algún jugador ha muerto
+    if (!players.player1.active && players.player2.active) {
+        drawVictory(`¡GANA P2!\nEl jugador 1 ha muerto`);
+        gameRunning = false;
+        return;
+    } else if (!players.player2.active && players.player1.active) {
+        drawVictory(`¡GANA P1!\nEl jugador 2 ha muerto`);
+        gameRunning = false;
+        return;
+    }
 
     // Animación enemigos
     enemyAnimTimer += 16;
@@ -396,6 +409,7 @@ function gameLoop() {
 
     requestAnimationFrame(gameLoop);
 }
+
 
 // Iniciar juego
 gameLoop();
