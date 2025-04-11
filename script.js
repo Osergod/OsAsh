@@ -55,7 +55,7 @@ const ENEMY_CONFIG = {
     cols: 20,
     padding: 2,
     offsetTop: 40,
-    speed: 0.5,
+    speed: 5,
     shootChance: 0.04
 };
 
@@ -371,6 +371,7 @@ window.addEventListener('keyup', (e) => {
 // Bucle principal del juego
 // Bucle principal del juego
 // Bucle principal del juego
+// Bucle principal del juego
 function gameLoop() {
     if (!gameRunning) return;
 
@@ -387,6 +388,15 @@ function gameLoop() {
     drawPlayer(players.player2, player2Img);
     drawBullets();
     drawHUD();
+
+    // Comprobar si los enemigos llegaron a la altura de los jugadores
+    if (enemies.some(enemy => enemy.alive && enemy.y + ENEMY_CONFIG.height >= players.player1.y)) {
+        // Los enemigos han alcanzado a los jugadores, termina el juego
+        let victoryText = determineWinner();
+        drawVictory(victoryText);
+        gameRunning = false;
+        return;
+    }
 
     // Verificar si un jugador ha muerto y terminar el juego si es necesario
     if (players.player1.lives <= 0 && players.player2.lives <= 0) {
@@ -423,8 +433,65 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+// Determinar el ganador o empate cuando los enemigos alcanzan la altura de los jugadores
+function determineWinner() {
+    if (players.player1.score > players.player2.score) {
+        return `¡GANA P1! Puntos: ${players.player1.score}`;
+    } else if (players.player2.score > players.player1.score) {
+        return `¡GANA P2! Puntos: ${players.player2.score}`;
+    } else {
+        return `¡EMPATE! ${players.player1.score}-${players.player2.score}`;
+    }
+}
 
+// Función para mover los enemigos
+function moveEnemies() {
+    const margin = 20;
+    let changeDirection = false;
 
+    // Encontramos el enemigo más a la izquierda y el más a la derecha
+    const aliveEnemies = enemies.filter(e => e.alive);
+    
+    if (aliveEnemies.length > 0) {
+        const leftmost = aliveEnemies.reduce((min, e) => e.x < min.x ? e : min, aliveEnemies[0]);
+        const rightmost = aliveEnemies.reduce((max, e) => e.x > max.x ? e : max, aliveEnemies[0]);
+
+        // Si el enemigo más a la izquierda o el más a la derecha tocan los márgenes de la pantalla
+        if (leftmost.x <= margin || rightmost.x + ENEMY_CONFIG.width >= canvas.width - margin) {
+            changeDirection = true;
+        }
+    }
+
+    // Si hay que cambiar de dirección, bajamos y alternamos la dirección
+    if (changeDirection) {
+        // Los enemigos bajan un poco
+        enemies.forEach(enemy => {
+            if (enemy.alive) {
+                enemy.y += 10;  // Baja un poco
+                // Después de bajar, movemos a la dirección contraria
+                if (movingLeft) {
+                    enemy.x += 10;  // Mueve a la derecha
+                } else {
+                    enemy.x -= 10;  // Mueve a la izquierda
+                }
+            }
+        });
+
+        // Alternar dirección para el siguiente ciclo
+        movingLeft = !movingLeft;
+    }
+
+    // Mover los enemigos horizontalmente según la dirección actual
+    enemies.forEach(enemy => {
+        if (enemy.alive) {
+            if (movingLeft) {
+                enemy.x -= ENEMY_CONFIG.speed;  // Mueve hacia la izquierda
+            } else {
+                enemy.x += ENEMY_CONFIG.speed;  // Mueve hacia la derecha
+            }
+        }
+    });
+}
 
 
 // Iniciar juego
