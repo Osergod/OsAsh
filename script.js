@@ -124,29 +124,72 @@ function drawPlayer(player, img) {
 
 function drawBullets() {
     ctx.fillStyle = 'white';
+    
+    // Procesar balas de ambos jugadores
     Object.values(players).forEach(player => {
         if (!player.active) return;
+        
         for (let i = player.bullets.length - 1; i >= 0; i--) {
             const bullet = player.bullets[i];
+            
+            // Dibujar la bala
             ctx.fillRect(bullet.x, bullet.y, 5, 15);
+            
+            // Mover la bala
             bullet.y -= 8;
-        
-            let hit = false;
-            for (const enemy of enemies) {
-                if (enemy.alive && isColliding(bullet, enemy)) {
-                    enemy.alive = false;
-                    hit = true;
-                    break;
+            
+            // Verificar colisión con enemigos
+            let hitEnemy = false;
+            for (let j = 0; j < enemies.length; j++) {
+                const enemy = enemies[j];
+                
+                if (enemy.alive) {
+                    // Crear objeto de colisión para la bala con dimensiones correctas
+                    const bulletCollider = {
+                        x: bullet.x,
+                        y: bullet.y,
+                        width: 5,
+                        height: 15
+                    };
+                    
+                    // Crear objeto de colisión para el enemigo
+                    const enemyCollider = {
+                        x: enemy.x,
+                        y: enemy.y,
+                        width: enemy.width,
+                        height: enemy.height
+                    };
+                    
+                    if (isColliding(bulletCollider, enemyCollider)) {
+                        enemy.alive = false;
+                        hitEnemy = true;
+                        
+                        // Verificar si todos los enemigos están muertos
+                        const remainingEnemies = enemies.filter(e => e.alive).length;
+                        if (remainingEnemies === 0) {
+                            if (players.player1.active && players.player2.active) {
+                                drawVictory("¡AMBOS GANAN!");
+                            } else if (players.player1.active) {
+                                drawVictory("¡GANA P1!");
+                            } else {
+                                drawVictory("¡GANA P2!");
+                            }
+                            gameRunning = false;
+                            return;
+                        }
+                        break;
+                    }
                 }
             }
-        
-            if (hit || bullet.y < 0) {
+            
+            // Eliminar bala si golpeó un enemigo o salió de la pantalla
+            if (hitEnemy || bullet.y < 0) {
                 player.bullets.splice(i, 1);
             }
-        }        
-        player.bullets = player.bullets.filter(b => b.y > 0);
+        }
     });
 
+    // Balas enemigas (mantener igual que antes)
     ctx.fillStyle = '#ff5555';
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const bullet = enemyBullets[i];
