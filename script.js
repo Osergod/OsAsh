@@ -18,8 +18,8 @@ const players = {
     player1: {
         x: canvas.width / 2 - 150,
         y: canvas.height - 120,
-        width: 100,
-        height: 100,
+        width: 76,
+        height: 76,
         speed: 7,
         bullets: [],
         canShoot: true,
@@ -32,8 +32,8 @@ const players = {
     player2: {
         x: canvas.width / 2 + 50,
         y: canvas.height - 120,
-        width: 100,
-        height: 100,
+        width: 76,
+        height: 76,
         speed: 7,
         bullets: [],
         canShoot: true,
@@ -56,7 +56,7 @@ const ENEMY_CONFIG = {
     padding: 2,
     offsetTop: 40,
     speed: 0.5,
-    shootChance: 0.01
+    shootChance: 0.04
 };
 
 // Crear formación de enemigos
@@ -265,13 +265,16 @@ function drawVictory(text) {
     // Dividir el texto en dos partes
     const lines = text.split("\n");
     ctx.fillText(lines[0], canvas.width / 2, canvas.height / 2 - 40);
-    ctx.fillText(lines[1], canvas.width / 2, canvas.height / 2 + 40);
+    if (lines[1]) {
+        ctx.fillText(lines[1], canvas.width / 2, canvas.height / 2 + 40);
+    }
     
     ctx.fillStyle = 'white';
     ctx.font = '36px Arial';
     ctx.fillText('Presiona F5 para reiniciar', canvas.width / 2, canvas.height / 2 + 100);
     ctx.textAlign = 'left';
 }
+
 
 
 
@@ -367,11 +370,13 @@ window.addEventListener('keyup', (e) => {
 // Bucle principal del juego
 // Bucle principal del juego
 // Bucle principal del juego
+// Bucle principal del juego
 function gameLoop() {
     if (!gameRunning) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Actualizamos el estado de los jugadores
     Object.values(players).forEach(updatePlayerStatus);
     movePlayer();
     moveEnemies();
@@ -383,20 +388,26 @@ function gameLoop() {
     drawBullets();
     drawHUD();
 
-    // Verificar si los enemigos han alcanzado la altura de los jugadores
-    const lowestEnemyY = Math.max(...enemies.filter(e => e.alive).map(e => e.y + e.height));
-    if (lowestEnemyY >= canvas.height - players.player1.height) {
-        // Los enemigos han llegado al nivel de los jugadores, fin del juego
-        let victoryText;
+    // Verificar si un jugador ha muerto y terminar el juego si es necesario
+    if (players.player1.lives <= 0 && players.player2.lives <= 0) {
+        // Si ambos jugadores han muerto, empate
+        let victoryText = `¡EMPATE! ${players.player1.score}-${players.player2.score}`;
+        drawVictory(victoryText);
+        gameRunning = false;
+        return;
+    }
 
-        if (players.player1.score > players.player2.score) {
-            victoryText = `¡GANA P1!\nPuntos: ${players.player1.score} - ${players.player2.score}`;
-        } else if (players.player2.score > players.player1.score) {
-            victoryText = `¡GANA P2!\nPuntos: ${players.player2.score} - ${players.player1.score}`;
-        } else {
-            victoryText = `¡EMPATE!\nP1: ${players.player1.score} - P2: ${players.player2.score}`;
-        }
+    if (players.player1.lives <= 0) {
+        // Si el jugador 1 ha muerto, gana el jugador 2
+        let victoryText = `¡GANA P2! Puntos: ${players.player2.score}`;
+        drawVictory(victoryText);
+        gameRunning = false;
+        return;
+    }
 
+    if (players.player2.lives <= 0) {
+        // Si el jugador 2 ha muerto, gana el jugador 1
+        let victoryText = `¡GANA P1! Puntos: ${players.player1.score}`;
         drawVictory(victoryText);
         gameRunning = false;
         return;
@@ -409,15 +420,10 @@ function gameLoop() {
         enemyAnimTimer = 0;
     }
 
-    // Verificar estado del juego si ambos jugadores están muertos
-    if (!players.player1.active && !players.player2.active) {
-        gameRunning = false;
-        drawGameOver();
-        return;
-    }
-
     requestAnimationFrame(gameLoop);
 }
+
+
 
 
 
