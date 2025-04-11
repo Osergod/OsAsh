@@ -26,6 +26,7 @@ const players = {
         lives: 3,
         invulnerable: false,
         lastHitTime: 0,
+        score: 0,
         active: true
     },
     player2: {
@@ -39,6 +40,7 @@ const players = {
         lives: 3,
         invulnerable: false,
         lastHitTime: 0,
+        score: 0,
         active: true
     }
 };
@@ -123,19 +125,18 @@ function drawPlayer(player, img) {
 }
 
 function drawBullets() {
+    // Dibujar y actualizar balas de los jugadores
     ctx.fillStyle = 'white';
-    
-    // Procesar balas de ambos jugadores
     Object.values(players).forEach(player => {
         if (!player.active) return;
         
         for (let i = player.bullets.length - 1; i >= 0; i--) {
             const bullet = player.bullets[i];
             
-            // Dibujar la bala
+            // Dibujar bala
             ctx.fillRect(bullet.x, bullet.y, 5, 15);
             
-            // Mover la bala
+            // Mover bala hacia arriba
             bullet.y -= 8;
             
             // Verificar colisión con enemigos
@@ -144,7 +145,7 @@ function drawBullets() {
                 const enemy = enemies[j];
                 
                 if (enemy.alive) {
-                    // Crear objeto de colisión para la bala con dimensiones correctas
+                    // Crear objetos de colisión con dimensiones precisas
                     const bulletCollider = {
                         x: bullet.x,
                         y: bullet.y,
@@ -152,7 +153,6 @@ function drawBullets() {
                         height: 15
                     };
                     
-                    // Crear objeto de colisión para el enemigo
                     const enemyCollider = {
                         x: enemy.x,
                         y: enemy.y,
@@ -161,19 +161,39 @@ function drawBullets() {
                     };
                     
                     if (isColliding(bulletCollider, enemyCollider)) {
+                        // Eliminar enemigo
                         enemy.alive = false;
                         hitEnemy = true;
                         
-                        // Verificar si todos los enemigos están muertos
+                        // Incrementar puntuación del jugador
+                        player.score++;
+                        
+                        // Efecto visual de puntos
+                        ctx.fillStyle = 'gold';
+                        ctx.font = '16px Arial';
+                        ctx.fillText('+1', enemy.x + enemy.width/2 - 10, enemy.y);
+                        ctx.fillStyle = 'white';
+                        
+                        // Verificar si todos los enemigos fueron eliminados
                         const remainingEnemies = enemies.filter(e => e.alive).length;
                         if (remainingEnemies === 0) {
+                            // Determinar ganador basado en puntuación
+                            let victoryText;
                             if (players.player1.active && players.player2.active) {
-                                drawVictory("¡AMBOS GANAN!");
+                                if (players.player1.score > players.player2.score) {
+                                    victoryText = `¡GANA P1! ${players.player1.score}-${players.player2.score}`;
+                                } else if (players.player2.score > players.player1.score) {
+                                    victoryText = `¡GANA P2! ${players.player2.score}-${players.player1.score}`;
+                                } else {
+                                    victoryText = `¡EMPATE! ${players.player1.score}-${players.player2.score}`;
+                                }
                             } else if (players.player1.active) {
-                                drawVictory("¡GANA P1!");
+                                victoryText = `¡GANA P1! Puntos: ${players.player1.score}`;
                             } else {
-                                drawVictory("¡GANA P2!");
+                                victoryText = `¡GANA P2! Puntos: ${players.player2.score}`;
                             }
+                            
+                            drawVictory(victoryText);
                             gameRunning = false;
                             return;
                         }
@@ -182,21 +202,26 @@ function drawBullets() {
                 }
             }
             
-            // Eliminar bala si golpeó un enemigo o salió de la pantalla
+            // Eliminar bala si golpeó enemigo o salió de pantalla
             if (hitEnemy || bullet.y < 0) {
                 player.bullets.splice(i, 1);
             }
         }
     });
 
-    // Balas enemigas (mantener igual que antes)
+    // Dibujar y actualizar balas enemigas
     ctx.fillStyle = '#ff5555';
     for (let i = enemyBullets.length - 1; i >= 0; i--) {
         const bullet = enemyBullets[i];
+        
+        // Dibujar bala enemiga
         ctx.fillRect(bullet.x, bullet.y, 8, 20);
+        
+        // Mover bala hacia abajo
         bullet.y += 6;
 
-        let hit = false;
+        // Verificar colisión con jugadores
+        let hitPlayer = false;
         for (const playerKey in players) {
             const player = players[playerKey];
             if (checkPlayerHit(player, {
@@ -205,12 +230,13 @@ function drawBullets() {
                 width: 8,
                 height: 20
             })) {
-                hit = true;
+                hitPlayer = true;
                 break;
             }
         }
 
-        if (hit || bullet.y > canvas.height) {
+        // Eliminar bala si golpeó jugador o salió de pantalla
+        if (hitPlayer || bullet.y > canvas.height) {
             enemyBullets.splice(i, 1);
         }
     }
@@ -235,14 +261,16 @@ function drawHUD() {
     ctx.font = '24px Arial';
     ctx.textAlign = 'left';
 
-    // Vides jugador 1
+    // Jugador 1
     if (players.player1.active) {
-        ctx.fillText(`Vidas P1: ${players.player1.lives}`, 20, 30);
+        ctx.fillText(`P1 Vidas: ${players.player1.lives}`, 20, 30);
+        ctx.fillText(`P1 Puntos: ${players.player1.score}`, 20, 60);
     }
 
-    // Vides jugador 2
+    // Jugador 2
     if (players.player2.active) {
-        ctx.fillText(`Vidas P2: ${players.player2.lives}`, canvas.width - 150, 30);
+        ctx.fillText(`P2 Vidas: ${players.player2.lives}`, canvas.width - 200, 30);
+        ctx.fillText(`P2 Puntos: ${players.player2.score}`, canvas.width - 200, 60);
     }
 }
 
