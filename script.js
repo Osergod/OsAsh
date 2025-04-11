@@ -157,21 +157,13 @@ function drawBullets() {
                     ctx.fillText('+1', enemy.x + enemy.width/2 - 10, enemy.y);
                     ctx.fillStyle = 'white';
                     
-                    // Verificar si todos los enemigos están muertos
-                    if (enemies.every(e => !e.alive)) {
+                    // Verificar si un jugador alcanzó 100 enemigos eliminados
+                    if (player.score >= 100) {
                         let victoryText;
-                        if (players.player1.active && players.player2.active) {
-                            if (players.player1.score > players.player2.score) {
-                                victoryText = `¡GANA P1! ${players.player1.score}-${players.player2.score}`;
-                            } else if (players.player2.score > players.player1.score) {
-                                victoryText = `¡GANA P2! ${players.player2.score}-${players.player1.score}`;
-                            } else {
-                                victoryText = `¡EMPATE! ${players.player1.score}-${players.player2.score}`;
-                            }
-                        } else if (players.player1.active) {
-                            victoryText = `¡GANA P1! Puntos: ${players.player1.score}`;
+                        if (player === players.player1) {
+                            victoryText = `¡GANA P1!\nHas eliminado 100 enemigos`;
                         } else {
-                            victoryText = `¡GANA P2! Puntos: ${players.player2.score}`;
+                            victoryText = `¡GANA P2!\nHas eliminado 100 enemigos`;
                         }
                         
                         drawVictory(victoryText);
@@ -214,6 +206,7 @@ function drawBullets() {
         }
     }
 }
+
 
 function drawEnemies() {
     enemies.forEach(enemy => {
@@ -268,12 +261,18 @@ function drawVictory(text) {
     ctx.font = 'bold 72px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, canvas.width / 2, canvas.height / 2 - 40);
+    
+    // Dividir el texto en dos partes
+    const lines = text.split("\n");
+    ctx.fillText(lines[0], canvas.width / 2, canvas.height / 2 - 40);
+    ctx.fillText(lines[1], canvas.width / 2, canvas.height / 2 + 40);
+    
     ctx.fillStyle = 'white';
     ctx.font = '36px Arial';
-    ctx.fillText('Presiona F5 para reiniciar', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Presiona F5 para reiniciar', canvas.width / 2, canvas.height / 2 + 100);
     ctx.textAlign = 'left';
 }
+
 
 // Funciones de movimiento
 function movePlayer() {
