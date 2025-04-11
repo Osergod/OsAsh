@@ -1,0 +1,70 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    font-family: 'Arial', sans-serif;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #101010;
+    background-image: url('images/fondo.jpg');
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
+.game-container {
+    text-align: center;
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    background: linear-gradient(180deg, rgba(173,21,25,1) 22%, rgba(250,189,0,1) 40%, rgba(250,189,0,1) 60%, rgba(173,21,25,1) 78%);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 600px;
+}
+
+.title h1 {
+    font-size: 3rem;
+    color: white;
+}
+
+
+.title p {
+    font-size: 1.2rem;
+    color: white;
+    margin-top: 10px;
+}
+
+.start-button-container {
+    margin-top: 30px;
+}
+
+.alink {
+    text-decoration: none;
+    color: white;
+}
+
+.start-button {
+    background: linear-gradient(180deg, rgba(250,189,0,1) 26%, rgba(173,21,25,1) 100%);
+    color: white;
+    font-size: 1.5rem;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.start-button:hover {
+    background-color: #b30000;
+}
+
+.footer {
+    margin-top: 20px;
+    font-size: 1rem;
+    color: #aaa;
+}
