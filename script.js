@@ -366,9 +366,10 @@ window.addEventListener('keyup', (e) => {
 
 // Bucle principal del juego
 // Bucle principal del juego
+// Bucle principal del juego
 function gameLoop() {
     if (!gameRunning) return;
-    
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     Object.values(players).forEach(updatePlayerStatus);
@@ -382,13 +383,21 @@ function gameLoop() {
     drawBullets();
     drawHUD();
 
-    // Verificar si algún jugador ha muerto
-    if (!players.player1.active && players.player2.active) {
-        drawVictory(`¡GANA P2!\nEl jugador 1 ha muerto`);
-        gameRunning = false;
-        return;
-    } else if (!players.player2.active && players.player1.active) {
-        drawVictory(`¡GANA P1!\nEl jugador 2 ha muerto`);
+    // Verificar si los enemigos han alcanzado la altura de los jugadores
+    const lowestEnemyY = Math.max(...enemies.filter(e => e.alive).map(e => e.y + e.height));
+    if (lowestEnemyY >= canvas.height - players.player1.height) {
+        // Los enemigos han llegado al nivel de los jugadores, fin del juego
+        let victoryText;
+
+        if (players.player1.score > players.player2.score) {
+            victoryText = `¡GANA P1!\nPuntos: ${players.player1.score} - ${players.player2.score}`;
+        } else if (players.player2.score > players.player1.score) {
+            victoryText = `¡GANA P2!\nPuntos: ${players.player2.score} - ${players.player1.score}`;
+        } else {
+            victoryText = `¡EMPATE!\nP1: ${players.player1.score} - P2: ${players.player2.score}`;
+        }
+
+        drawVictory(victoryText);
         gameRunning = false;
         return;
     }
@@ -400,7 +409,7 @@ function gameLoop() {
         enemyAnimTimer = 0;
     }
 
-    // Verificar estado del juego
+    // Verificar estado del juego si ambos jugadores están muertos
     if (!players.player1.active && !players.player2.active) {
         gameRunning = false;
         drawGameOver();
@@ -409,6 +418,7 @@ function gameLoop() {
 
     requestAnimationFrame(gameLoop);
 }
+
 
 
 // Iniciar juego
